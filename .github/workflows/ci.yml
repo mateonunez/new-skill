@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        bun: ['1.1', '1.2', 'latest']
+        bun: ['1.2', 'latest']
 
     steps:
       - name: Checkout Repository
