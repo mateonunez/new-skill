@@ -77,7 +77,9 @@ export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: We
 
   return (
     <Box flexDirection="column" padding={2} gap={1}>
-      <Text bold color={T.accentText}>{'new-skill'}</Text>
+      <Text bold color={T.accentText}>
+        {'new-skill'}
+      </Text>
 
       <Text color={T.textMuted}>
         {'Scaffold a new agent skill — covers all files and directories.'}

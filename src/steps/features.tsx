@@ -73,7 +73,7 @@ export function Features({
       }
       if (input === ' ') {
         if (cursor < FEATURE_ITEMS.length) {
-          const featureKey = FEATURE_ITEMS[cursor]!.key;
+          const featureKey = FEATURE_ITEMS[cursor]?.key;
           setFeatures((f) => ({ ...f, [featureKey]: !f[featureKey] }));
         }
         return;
@@ -86,7 +86,7 @@ export function Features({
             doNext();
           }
         } else {
-          const featureKey = FEATURE_ITEMS[cursor]!.key;
+          const featureKey = FEATURE_ITEMS[cursor]?.key;
           setFeatures((f) => ({ ...f, [featureKey]: !f[featureKey] }));
         }
         return;
@@ -144,9 +144,7 @@ export function Features({
           </Text>
         ))}
 
-        <Text color={T.textDim}>
-          {'  ─────────────────────────────────────────────────────'}
-        </Text>
+        <Text color={T.textDim}>{'  ─────────────────────────────────────────────────────'}</Text>
 
         <Text>
           <Text color={cursor === CONTINUE_IDX && focusZone === 'list' ? T.accentText : T.textDim}>

@@ -98,9 +98,7 @@ export function Preview({ config, generating, generateError, onConfirm, onBack }
         </Box>
       </Box>
 
-      {generateError && (
-        <Text color={T.error}>{` x Error: ${generateError}`}</Text>
-      )}
+      {generateError && <Text color={T.error}>{` x Error: ${generateError}`}</Text>}
 
       {generating ? (
         <Text color={T.warning}>{'  Generating files...'}</Text>

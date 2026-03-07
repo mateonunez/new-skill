@@ -22,11 +22,11 @@ export function Done({ config, generatedPaths }: DoneProps) {
 
   return (
     <Box flexDirection="column" padding={2} gap={1}>
-      <Text bold color={T.success}>{'Done!'}</Text>
-
-      <Text color={T.success}>
-        {`  ✓ Skill "${config.name}" generated successfully!`}
+      <Text bold color={T.success}>
+        {'Done!'}
       </Text>
+
+      <Text color={T.success}>{`  ✓ Skill "${config.name}" generated successfully!`}</Text>
 
       <Text color={T.textMuted}>
         {'  Output: '}

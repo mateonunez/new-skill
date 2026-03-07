@@ -41,12 +41,7 @@ export function Metadata({ initialDescription = '', onNext, onBack }: MetadataPr
         subtitle="Describe what triggers this skill and how the agent should use it."
       />
 
-      <FieldBox
-        title="Description  (trigger condition)"
-        focused
-        height={3}
-        marginTop={1}
-      >
+      <FieldBox title="Description  (trigger condition)" focused height={3} marginTop={1}>
         <TextInput
           placeholder="Extracts data from X files. Use when working with X or when the user mentions Y."
           focus
