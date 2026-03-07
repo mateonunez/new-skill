@@ -9,6 +9,9 @@ const result = await Bun.build({
   define: {
     'process.env.DEV': 'false',
   },
+  // react-devtools-core is an optional dev dependency of ink, only loaded
+  // when DEV=true. Mark it external so Bun doesn't fail trying to resolve it.
+  external: ['react-devtools-core'],
 });
 
 if (!result.success) {
