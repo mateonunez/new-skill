@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target node && mv dist/index.js dist/new-skill && chmod +x dist/new-skill",
+    "build": "bun run scripts/build.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome format && biome lint && biome check",
     "lint:fix": "biome format --write && biome lint --write --unsafe && biome check --write"
