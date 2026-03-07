@@ -1,8 +1,8 @@
-import { useKeyboard } from '@opentui/react';
+import { Box, Text, useInput } from 'ink';
+import TextInput from 'ink-text-input';
 import { useCallback, useState } from 'react';
 import { ErrorLine, FieldBox, KeyHints } from '../components.js';
 import { T } from '../theme.js';
-import { onInputSubmit } from '../utils/input.js';
 import { GERUND_RE, KEBAB_RE } from '../utils/validation.js';
 
 interface WelcomeProps {
@@ -34,8 +34,8 @@ export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: We
     });
   }, []);
 
-  useKeyboard((key) => {
-    if (key.ctrl && key.name === 's') {
+  useInput((input, key) => {
+    if (key.ctrl && input === 's') {
       const err = validateName(name);
       if (err) {
         setError(err);
@@ -47,7 +47,7 @@ export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: We
       return;
     }
 
-    if (key.name === 'tab') {
+    if (key.tab) {
       cycleFocus(key.shift);
     }
   });
@@ -76,36 +76,38 @@ export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: We
   const showGerundHint = name.length > 2 && KEBAB_RE.test(name) && !GERUND_RE.test(name);
 
   return (
-    <box flexDirection="column" padding={2} gap={1}>
-      <ascii-font text="new-skill" font="tiny" />
+    <Box flexDirection="column" padding={2} gap={1}>
+      <Text bold color={T.accentText}>
+        {'new-skill'}
+      </Text>
 
-      <text style={{ fg: T.textMuted, marginTop: 1 }}>
-        Scaffold a new agent skill — covers all files and directories.
-      </text>
+      <Text color={T.textMuted}>
+        {'Scaffold a new agent skill — covers all files and directories.'}
+      </Text>
 
       <FieldBox title="Skill Name" focused={focused === 'name'} height={3} marginTop={1}>
-        <input
+        <TextInput
           placeholder="e.g. processing-pdfs  (kebab-case)"
-          focused={focused === 'name'}
-          onInput={setName}
-          onSubmit={onInputSubmit(handleNameSubmit)}
-          value={initialName}
+          focus={focused === 'name'}
+          onChange={setName}
+          onSubmit={handleNameSubmit}
+          value={name}
         />
       </FieldBox>
 
       {showGerundHint && (
-        <text style={{ fg: T.textDim }}>
+        <Text color={T.textDim}>
           {'  Tip: gerund names work well (e.g. processing-pdfs, managing-configs)'}
-        </text>
+        </Text>
       )}
 
       <FieldBox title="Output Directory" focused={focused === 'dir'} height={3}>
-        <input
+        <TextInput
           placeholder="e.g. ./skills  (defaults to current dir)"
-          focused={focused === 'dir'}
-          onInput={setOutputDir}
-          onSubmit={onInputSubmit(handleDirSubmit)}
-          value={initialOutputDir}
+          focus={focused === 'dir'}
+          onChange={setOutputDir}
+          onSubmit={handleDirSubmit}
+          value={outputDir}
         />
       </FieldBox>
 
@@ -113,13 +115,13 @@ export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: We
 
       <KeyHints
         hints={[
-          { key: 'Tab', label: 'Next field   ' },
-          { key: 'Shift+Tab', label: 'Prev field   ' },
-          { key: 'Enter', label: 'Confirm   ' },
-          { key: 'Ctrl+S', label: 'Continue   ' },
+          { key: 'Tab', label: 'Next field' },
+          { key: 'Shift+Tab', label: 'Prev field' },
+          { key: 'Enter', label: 'Confirm' },
+          { key: 'Ctrl+S', label: 'Continue' },
           { key: 'Ctrl+C', label: 'Exit' },
         ]}
       />
-    </box>
+    </Box>
   );
 }

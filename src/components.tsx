@@ -1,5 +1,5 @@
+import { Box, Text } from 'ink';
 import type { ReactNode } from 'react';
-import { Fragment } from 'react';
 import { T } from './theme.js';
 
 // ---------------------------------------------------------------------------
@@ -11,15 +11,14 @@ interface StepHeaderProps {
   subtitle?: string;
 }
 
-/** Renders a bold step title and an optional muted subtitle. */
 export function StepHeader({ title, subtitle }: StepHeaderProps) {
   return (
-    <>
-      <text fg={T.text}>
-        <strong>{title}</strong>
-      </text>
-      {subtitle && <text fg={T.textMuted}>{subtitle}</text>}
-    </>
+    <Box flexDirection="column">
+      <Text bold color={T.text}>
+        {title}
+      </Text>
+      {subtitle && <Text color={T.textMuted}>{subtitle}</Text>}
+    </Box>
   );
 }
 
@@ -37,10 +36,6 @@ interface FieldBoxProps {
   children: ReactNode;
 }
 
-/**
- * A bordered box whose border colour reflects focus state.
- * Use instead of repeating `border + borderColor` in every step.
- */
 export function FieldBox({
   title,
   focused,
@@ -50,19 +45,20 @@ export function FieldBox({
   flexShrink,
   children,
 }: FieldBoxProps) {
+  const borderColor = focused ? T.borderFocus : T.border;
   return (
-    <box
-      flexDirection="column"
-      title={title}
-      border
-      borderColor={focused ? T.borderFocus : T.border}
-      height={height}
-      marginTop={marginTop}
-      padding={padding}
-      flexShrink={flexShrink}
-    >
-      {children}
-    </box>
+    <Box flexDirection="column" marginTop={marginTop} flexShrink={flexShrink}>
+      <Text color={borderColor}>{` ${title} `}</Text>
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor={borderColor}
+        height={height}
+        padding={padding}
+      >
+        {children}
+      </Box>
+    </Box>
   );
 }
 
@@ -75,12 +71,11 @@ interface ErrorLineProps {
   hint?: string;
 }
 
-/** Shows an error in red, or a muted hint/placeholder when there is no error. */
 export function ErrorLine({ error, hint }: ErrorLineProps) {
   return error ? (
-    <text style={{ fg: T.error }}> x {error}</text>
+    <Text color={T.error}>{` x ${error}`}</Text>
   ) : (
-    <text style={{ fg: T.textMuted }}>{hint ?? ' '}</text>
+    <Text color={T.textMuted}>{hint ?? ' '}</Text>
   );
 }
 
@@ -94,16 +89,17 @@ export interface HintDef {
   keyColor?: string;
 }
 
-/** Renders a row of keyboard shortcut hints: [Key]  label  [Key]  label */
 export function KeyHints({ hints }: { hints: HintDef[] }) {
   return (
-    <text style={{ fg: T.textDim, marginTop: 1 }}>
-      {hints.map(({ key, label, keyColor = T.accentText }) => (
-        <Fragment key={`${key}-${label}`}>
-          <span fg={keyColor}>{`[${key}]`}</span>
-          {`  ${label}`}
-        </Fragment>
-      ))}
-    </text>
+    <Box marginTop={1}>
+      <Text>
+        {hints.map(({ key, label, keyColor = T.accentText }) => (
+          <Text key={`${key}-${label}`}>
+            <Text color={keyColor}>{`[${key}]`}</Text>
+            <Text color={T.textDim}>{`  ${label}  `}</Text>
+          </Text>
+        ))}
+      </Text>
+    </Box>
   );
 }
