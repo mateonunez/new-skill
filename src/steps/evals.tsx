@@ -1,9 +1,9 @@
-import { useKeyboard } from '@opentui/react';
+import { Box, Text, useInput } from 'ink';
+import TextInput from 'ink-text-input';
 import { useState } from 'react';
 import { ErrorLine, FieldBox, KeyHints, StepHeader } from '../components.js';
 import { T } from '../theme.js';
 import type { EvalEntry } from '../types/skill.js';
-import { onInputSubmit } from '../utils/input.js';
 
 type EvalPhase = 'prompt' | 'expected';
 
@@ -17,15 +17,17 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
   const [evals, setEvals] = useState<EvalEntry[]>(initialEvals);
   const [phase, setPhase] = useState<EvalPhase>('prompt');
   const [currentPrompt, setCurrentPrompt] = useState('');
-  const [inputKey, setInputKey] = useState(0);
+  const [promptInput, setPromptInput] = useState('');
+  const [expectedInput, setExpectedInput] = useState('');
   const [error, setError] = useState('');
 
-  useKeyboard((key) => {
-    if (key.name === 'escape') {
+  useInput((input, key) => {
+    if (key.escape) {
       if (phase === 'expected') {
         setPhase('prompt');
         setCurrentPrompt('');
-        setInputKey((k) => k + 1);
+        setPromptInput('');
+        setExpectedInput('');
         setError('');
       } else {
         onBack();
@@ -33,7 +35,7 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
       return;
     }
 
-    if (key.ctrl && key.name === 's') {
+    if (key.ctrl && input === 's') {
       onNext(evals);
     }
   });
@@ -46,8 +48,8 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
     }
     setError('');
     setCurrentPrompt(trimmed);
+    setPromptInput('');
     setPhase('expected');
-    setInputKey((k) => k + 1);
   };
 
   const handleExpectedSubmit = (value: string) => {
@@ -66,8 +68,9 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
     setError('');
     setEvals((prev) => [...prev, newEval]);
     setCurrentPrompt('');
+    setPromptInput('');
+    setExpectedInput('');
     setPhase('prompt');
-    setInputKey((k) => k + 1);
   };
 
   const hint =
@@ -78,7 +81,7 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
       : ' Now enter the expected output for this eval.';
 
   return (
-    <box flexDirection="column" padding={2} gap={1}>
+    <Box flexDirection="column" padding={2} gap={1}>
       <StepHeader
         title="Step 5 — Eval Entries"
         subtitle="Add prompt + expected output pairs. Leave prompt empty to finish."
@@ -86,15 +89,17 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
 
       {evals.length > 0 && (
         <FieldBox title={`Added evals (${evals.length})`} marginTop={1} padding={1}>
-          {evals.map((e) => (
-            <text key={e.id}>
-              <span fg={T.success}>{'  + '}</span>
-              <span fg={T.accentText}>{e.id}</span>
-              <span fg={T.textDim}>{'  '}</span>
-              <span fg={T.text}>{e.prompt.substring(0, 50)}</span>
-              {e.prompt.length > 50 && <span fg={T.textDim}>{'...'}</span>}
-            </text>
-          ))}
+          <Box flexDirection="column">
+            {evals.map((e) => (
+              <Text key={e.id}>
+                <Text color={T.success}>{'  + '}</Text>
+                <Text color={T.accentText}>{e.id}</Text>
+                <Text color={T.textDim}>{'  '}</Text>
+                <Text color={T.text}>{e.prompt.substring(0, 50)}</Text>
+                {e.prompt.length > 50 && <Text color={T.textDim}>{'...'}</Text>}
+              </Text>
+            ))}
+          </Box>
         </FieldBox>
       )}
 
@@ -105,40 +110,42 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
           height={3}
           marginTop={1}
         >
-          <input
-            key={inputKey}
+          <TextInput
             placeholder="Describe what the user asks  (empty to finish)"
-            focused
-            onSubmit={onInputSubmit(handlePromptSubmit)}
+            focus
+            value={promptInput}
+            onChange={setPromptInput}
+            onSubmit={handlePromptSubmit}
           />
         </FieldBox>
       )}
 
       {phase === 'expected' && (
-        <>
+        <Box flexDirection="column" gap={1}>
           <FieldBox title="Prompt (locked)" height={3} marginTop={1}>
-            <input value={currentPrompt} focused={false} />
+            <Text color={T.textMuted}>{currentPrompt}</Text>
           </FieldBox>
           <FieldBox title="Expected Output" focused height={3}>
-            <input
-              key={inputKey}
+            <TextInput
               placeholder="Describe the expected response from the agent"
-              focused
-              onSubmit={onInputSubmit(handleExpectedSubmit)}
+              focus
+              value={expectedInput}
+              onChange={setExpectedInput}
+              onSubmit={handleExpectedSubmit}
             />
           </FieldBox>
-        </>
+        </Box>
       )}
 
       <ErrorLine error={error} hint={hint} />
 
       <KeyHints
         hints={[
-          { key: 'Enter', label: 'Next   ' },
-          { key: 'Ctrl+S', label: 'Continue   ' },
+          { key: 'Enter', label: 'Next' },
+          { key: 'Ctrl+S', label: 'Continue' },
           { key: 'Esc', label: phase === 'expected' ? 'Cancel eval' : 'Back' },
         ]}
       />
-    </box>
+    </Box>
   );
 }

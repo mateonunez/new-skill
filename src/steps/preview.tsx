@@ -1,5 +1,4 @@
-import { useKeyboard } from '@opentui/react';
-import { Fragment } from 'react';
+import { Box, Text, useInput } from 'ink';
 import { KeyHints, StepHeader } from '../components.js';
 import { buildFileTree } from '../generators/index.js';
 import { T } from '../theme.js';
@@ -16,16 +15,18 @@ interface PreviewProps {
 export function Preview({ config, generating, generateError, onConfirm, onBack }: PreviewProps) {
   const treeLines = buildFileTree(config);
 
-  useKeyboard((key) => {
+  useInput((input, key) => {
     if (generating) return;
 
-    if (key.name === 'return' || key.name === 'linefeed') {
+    if (key.return) {
       onConfirm();
+      return;
     }
-    if (key.ctrl && key.name === 's') {
+    if (key.ctrl && input === 's') {
       onConfirm();
+      return;
     }
-    if (key.name === 'escape') {
+    if (key.escape) {
       onBack();
     }
   });
@@ -33,83 +34,85 @@ export function Preview({ config, generating, generateError, onConfirm, onBack }
   const outputPath = `${config.outputDir}/${config.name}`;
 
   return (
-    <box flexDirection="column" padding={2} gap={1}>
-      <StepHeader title="Step 6 — Preview" subtitle={`Review the files that will be written to `} />
+    <Box flexDirection="column" padding={2} gap={1}>
+      <StepHeader title="Step 6 — Preview" subtitle="Review the files that will be written to:" />
 
-      {/* Output path shown separately so we can colour it */}
-      <text style={{ fg: T.textMuted }}>
+      <Text color={T.textMuted}>
         {'  → '}
-        <span fg={T.accentText}>{outputPath}</span>
-      </text>
+        <Text color={T.accentText}>{outputPath}</Text>
+      </Text>
 
-      <box title="Skill Summary" border borderColor={T.border} marginTop={1} padding={1}>
-        <text>
-          <span fg={T.textMuted}>{'  name:          '}</span>
-          <span fg={T.success}>{config.name}</span>
-          <br />
-          <span fg={T.textMuted}>{'  description:   '}</span>
-          <span fg={T.text}>{config.description.substring(0, 60)}</span>
-          {config.description.length > 60 && <span fg={T.textDim}>{'...'}</span>}
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor={T.border}
+        marginTop={1}
+        padding={1}
+      >
+        <Text color={T.textDim}>{' Skill Summary'}</Text>
+        <Box flexDirection="column" marginTop={1}>
+          <Text>
+            <Text color={T.textMuted}>{'  name:          '}</Text>
+            <Text color={T.success}>{config.name}</Text>
+          </Text>
+          <Text>
+            <Text color={T.textMuted}>{'  description:   '}</Text>
+            <Text color={T.text}>{config.description.substring(0, 60)}</Text>
+            {config.description.length > 60 && <Text color={T.textDim}>{'...'}</Text>}
+          </Text>
           {config.features.rules && (
-            <>
-              <br />
-              <span fg={T.textMuted}>{'  rules:          '}</span>
-              <span fg={T.warning}>
+            <Text>
+              <Text color={T.textMuted}>{'  rules:          '}</Text>
+              <Text color={T.warning}>
                 {config.rules.length > 0 ? config.rules.join(', ') : '(none added)'}
-              </span>
-            </>
+              </Text>
+            </Text>
           )}
           {config.features.evals && (
-            <>
-              <br />
-              <span fg={T.textMuted}>{'  evals:          '}</span>
-              <span fg={T.warning}>{`${config.evals.length} eval(s)`}</span>
-            </>
+            <Text>
+              <Text color={T.textMuted}>{'  evals:          '}</Text>
+              <Text color={T.warning}>{`${config.evals.length} eval(s)`}</Text>
+            </Text>
           )}
           {config.features.agents && (
-            <>
-              <br />
-              <span fg={T.textMuted}>{'  agent name:     '}</span>
-              <span fg={T.warning}>{config.agentDisplayName || config.name}</span>
-            </>
+            <Text>
+              <Text color={T.textMuted}>{'  agent name:     '}</Text>
+              <Text color={T.warning}>{config.agentDisplayName || config.name}</Text>
+            </Text>
           )}
-        </text>
-      </box>
+        </Box>
+      </Box>
 
-      <box title="Files to generate" border borderColor={T.border} padding={1}>
-        <text>
+      <Box flexDirection="column" borderStyle="single" borderColor={T.border} padding={1}>
+        <Text color={T.textDim}>{' Files to generate'}</Text>
+        <Box flexDirection="column" marginTop={1}>
           {treeLines.map((line, i) => {
             const isDir = line.trimEnd().endsWith('/');
             const isRoot = i === 0;
             return (
-              <Fragment key={i}>
-                {i > 0 && <br />}
-                <span fg={isRoot ? T.text : isDir ? T.accentText : T.textMuted}>{line}</span>
-              </Fragment>
+              <Text key={i} color={isRoot ? T.text : isDir ? T.accentText : T.textMuted}>
+                {line}
+              </Text>
             );
           })}
-        </text>
-      </box>
+        </Box>
+      </Box>
 
       {generateError && (
-        <text style={{ fg: T.error, marginTop: 1 }}> x Error: {generateError}</text>
+        <Text color={T.error}>{` x Error: ${generateError}`}</Text>
       )}
 
       {generating ? (
-        <text style={{ fg: T.warning, marginTop: 1 }}>{'  Generating files...'}</text>
+        <Text color={T.warning}>{'  Generating files...'}</Text>
       ) : (
         <KeyHints
           hints={[
-            { key: 'Enter', label: '/ ', keyColor: T.success },
-            {
-              key: 'Ctrl+S',
-              label: generateError ? 'Retry   ' : 'Generate   ',
-              keyColor: T.success,
-            },
+            { key: 'Enter', label: 'Generate', keyColor: T.success },
+            { key: 'Ctrl+S', label: generateError ? 'Retry' : 'Generate', keyColor: T.success },
             { key: 'Esc', label: 'Back' },
           ]}
         />
       )}
-    </box>
+    </Box>
   );
 }

@@ -1,8 +1,8 @@
-import { useKeyboard } from '@opentui/react';
+import { Box, Text, useInput } from 'ink';
+import TextInput from 'ink-text-input';
 import { useState } from 'react';
 import { ErrorLine, FieldBox, KeyHints, StepHeader } from '../components.js';
 import { T } from '../theme.js';
-import { onInputSubmit } from '../utils/input.js';
 import { KEBAB_RE } from '../utils/validation.js';
 
 const MAX_VISIBLE = 5;
@@ -15,16 +15,16 @@ interface RulesProps {
 
 export function Rules({ initialRules = [], onNext, onBack }: RulesProps) {
   const [rules, setRules] = useState<string[]>(initialRules);
-  const [inputKey, setInputKey] = useState(0);
+  const [inputValue, setInputValue] = useState('');
   const [error, setError] = useState('');
 
-  useKeyboard((key) => {
-    if (key.name === 'escape') {
+  useInput((input, key) => {
+    if (key.escape) {
       onBack();
       return;
     }
 
-    if (key.ctrl && key.name === 's') {
+    if (key.ctrl && input === 's') {
       onNext(rules);
     }
   });
@@ -49,7 +49,7 @@ export function Rules({ initialRules = [], onNext, onBack }: RulesProps) {
 
     setError('');
     setRules((prev) => [...prev, trimmed]);
-    setInputKey((k) => k + 1);
+    setInputValue('');
   };
 
   const hint =
@@ -58,7 +58,7 @@ export function Rules({ initialRules = [], onNext, onBack }: RulesProps) {
       : ` ${rules.length} rule(s) added. Empty Enter to continue.`;
 
   return (
-    <box flexDirection="column" padding={2} gap={1}>
+    <Box flexDirection="column" padding={2} gap={1}>
       <StepHeader
         title="Step 4 — Rules"
         subtitle="Add rule names (kebab-case). Each rule gets an Incorrect / Correct stub."
@@ -66,32 +66,33 @@ export function Rules({ initialRules = [], onNext, onBack }: RulesProps) {
 
       <FieldBox title={`Rules (${rules.length})`} marginTop={1} padding={1} flexShrink={0}>
         {rules.length === 0 ? (
-          <text fg={T.textDim}>{'  No rules added yet.'}</text>
+          <Text color={T.textDim}>{'  No rules added yet.'}</Text>
         ) : (
-          <>
+          <Box flexDirection="column">
             {rules.slice(-MAX_VISIBLE).map((rule, i) => {
               const idx = Math.max(0, rules.length - MAX_VISIBLE) + i;
               return (
-                <text key={rule}>
-                  <span fg={T.textDim}>{`  ${String(idx + 1).padStart(2, ' ')}. `}</span>
-                  <span fg={T.text}>{rule}</span>
-                  <span fg={T.textDim}>{`   → rules/${rule}.md`}</span>
-                </text>
+                <Text key={rule}>
+                  <Text color={T.textDim}>{`  ${String(idx + 1).padStart(2, ' ')}. `}</Text>
+                  <Text color={T.text}>{rule}</Text>
+                  <Text color={T.textDim}>{`   → rules/${rule}.md`}</Text>
+                </Text>
               );
             })}
             {rules.length > MAX_VISIBLE && (
-              <text fg={T.textDim}>{`     … and ${rules.length - MAX_VISIBLE} more`}</text>
+              <Text color={T.textDim}>{`     … and ${rules.length - MAX_VISIBLE} more`}</Text>
             )}
-          </>
+          </Box>
         )}
       </FieldBox>
 
       <FieldBox title="Add Rule Name" focused height={3} marginTop={1}>
-        <input
-          key={inputKey}
+        <TextInput
           placeholder="e.g. no-var  (Enter to add, empty Enter to finish)"
-          focused
-          onSubmit={onInputSubmit(handleSubmit)}
+          focus
+          value={inputValue}
+          onChange={setInputValue}
+          onSubmit={handleSubmit}
         />
       </FieldBox>
 
@@ -99,12 +100,12 @@ export function Rules({ initialRules = [], onNext, onBack }: RulesProps) {
 
       <KeyHints
         hints={[
-          { key: 'Enter', label: 'Add rule   ' },
-          { key: 'Enter (empty)', label: '/ ' },
-          { key: 'Ctrl+S', label: 'Continue   ' },
+          { key: 'Enter', label: 'Add rule' },
+          { key: 'Enter (empty)', label: 'Continue' },
+          { key: 'Ctrl+S', label: 'Continue' },
           { key: 'Esc', label: 'Back' },
         ]}
       />
-    </box>
+    </Box>
   );
 }

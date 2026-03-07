@@ -1,6 +1,5 @@
 import { relative } from 'node:path';
-import { useKeyboard, useRenderer } from '@opentui/react';
-import { Fragment } from 'react';
+import { Box, Text, useApp, useInput } from 'ink';
 import { KeyHints } from '../components.js';
 import { T } from '../theme.js';
 import type { SkillConfig } from '../types/skill.js';
@@ -11,32 +10,39 @@ interface DoneProps {
 }
 
 export function Done({ config, generatedPaths }: DoneProps) {
-  const renderer = useRenderer();
+  const { exit } = useApp();
 
-  useKeyboard((key) => {
-    if (key.name === 'q' || key.name === 'escape') {
-      renderer.destroy();
+  useInput((input, key) => {
+    if (input === 'q' || key.escape) {
+      exit();
     }
   });
 
   const cwd = process.cwd();
 
   return (
-    <box flexDirection="column" padding={2} gap={1}>
-      <ascii-font text="Done!" font="tiny" />
+    <Box flexDirection="column" padding={2} gap={1}>
+      <Text bold color={T.success}>{'Done!'}</Text>
 
-      <text style={{ fg: T.success, marginTop: 1, attributes: 1 }}>
-        {`  + Skill "${config.name}" generated successfully!`}
-      </text>
+      <Text color={T.success}>
+        {`  ✓ Skill "${config.name}" generated successfully!`}
+      </Text>
 
-      <text style={{ fg: T.textMuted }}>
+      <Text color={T.textMuted}>
         {'  Output: '}
-        <span fg={T.accentText}>{`${config.outputDir}/${config.name}/`}</span>
-      </text>
+        <Text color={T.accentText}>{`${config.outputDir}/${config.name}/`}</Text>
+      </Text>
 
-      <box title="Generated files" border borderColor={T.border} marginTop={1} padding={1}>
-        <text>
-          {generatedPaths.map((p, i) => {
+      <Box
+        flexDirection="column"
+        borderStyle="single"
+        borderColor={T.border}
+        marginTop={1}
+        padding={1}
+      >
+        <Text color={T.textDim}>{' Generated files'}</Text>
+        <Box flexDirection="column" marginTop={1}>
+          {generatedPaths.map((p) => {
             const rel = (() => {
               try {
                 return relative(cwd, p);
@@ -45,51 +51,52 @@ export function Done({ config, generatedPaths }: DoneProps) {
               }
             })();
             return (
-              <Fragment key={p}>
-                {i > 0 && <br />}
-                <span fg={T.success}>{'  + '}</span>
-                <span fg={T.text}>{rel}</span>
-              </Fragment>
+              <Text key={p}>
+                <Text color={T.success}>{'  + '}</Text>
+                <Text color={T.text}>{rel}</Text>
+              </Text>
             );
           })}
-        </text>
-      </box>
+        </Box>
+      </Box>
 
-      <box title="Next steps" border borderColor={T.border} padding={1}>
-        <text>
-          <span fg={T.warning}>{'  1. '}</span>
-          <span fg={T.text}>{'cd '}</span>
-          <span fg={T.accentText}>{`${config.outputDir}/${config.name}`}</span>
-          <br />
-          <span fg={T.warning}>{'  2. '}</span>
-          <span fg={T.text}>{'Edit '}</span>
-          <span fg={T.accentText}>{'SKILL.md'}</span>
-          <span fg={T.text}>{' — add Overview, Principles, and Workflow'}</span>
+      <Box flexDirection="column" borderStyle="single" borderColor={T.border} padding={1}>
+        <Text color={T.textDim}>{' Next steps'}</Text>
+        <Box flexDirection="column" marginTop={1}>
+          <Text>
+            <Text color={T.warning}>{'  1. '}</Text>
+            <Text color={T.text}>{'cd '}</Text>
+            <Text color={T.accentText}>{`${config.outputDir}/${config.name}`}</Text>
+          </Text>
+          <Text>
+            <Text color={T.warning}>{'  2. '}</Text>
+            <Text color={T.text}>{'Edit '}</Text>
+            <Text color={T.accentText}>{'SKILL.md'}</Text>
+            <Text color={T.text}>{' — add Overview, Principles, and Workflow'}</Text>
+          </Text>
           {config.features.rules && config.rules.length > 0 && (
-            <>
-              <br />
-              <span fg={T.warning}>{'  3. '}</span>
-              <span fg={T.text}>{'Complete code examples in '}</span>
-              <span fg={T.accentText}>{'rules/'}</span>
-            </>
+            <Text>
+              <Text color={T.warning}>{'  3. '}</Text>
+              <Text color={T.text}>{'Complete code examples in '}</Text>
+              <Text color={T.accentText}>{'rules/'}</Text>
+            </Text>
           )}
           {config.features.evals && (
-            <>
-              <br />
-              <span fg={T.warning}>{'  4. '}</span>
-              <span fg={T.text}>{'Update test cases in '}</span>
-              <span fg={T.accentText}>{'evals/evals.json'}</span>
-            </>
+            <Text>
+              <Text color={T.warning}>{'  4. '}</Text>
+              <Text color={T.text}>{'Update test cases in '}</Text>
+              <Text color={T.accentText}>{'evals/evals.json'}</Text>
+            </Text>
           )}
-        </text>
-      </box>
+        </Box>
+      </Box>
 
       <KeyHints
         hints={[
-          { key: 'q', label: '/ ' },
+          { key: 'q', label: 'Exit' },
           { key: 'Esc', label: 'Exit' },
         ]}
       />
-    </box>
+    </Box>
   );
 }

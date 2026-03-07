@@ -1,4 +1,4 @@
-import { useTerminalDimensions } from '@opentui/react';
+import { Box, Text } from 'ink';
 import { useCallback, useState } from 'react';
 import { generateSkill } from './generators/index.js';
 import { Done } from './steps/done.js';
@@ -56,7 +56,6 @@ function getPrevStep(step: number, config: SkillConfig): number {
 const STEP_LABELS = ['Welcome', 'Metadata', 'Features', 'Rules', 'Evals', 'Preview', 'Done'];
 
 export function App() {
-  const { width, height } = useTerminalDimensions();
   const [step, setStep] = useState<number>(STEPS.WELCOME);
   const [config, setConfig] = useState<SkillConfig>(defaultConfig);
   const [generatedPaths, setGeneratedPaths] = useState<string[]>([]);
@@ -101,27 +100,27 @@ export function App() {
   })();
 
   return (
-    <box width={width} height={height} flexDirection="column" backgroundColor={T.bg}>
+    <Box flexDirection="column">
       {/* Top bar */}
-      <box height={1} flexDirection="row" backgroundColor={T.surface} paddingX={2}>
-        <text>
-          <span fg={T.text}>
-            <strong>{'new-skill'}</strong>
-          </span>
-          <span fg={T.textDim}>{'  ·  '}</span>
-          <span fg={T.accentText}>{stepLabel}</span>
+      <Box flexDirection="row" paddingX={2}>
+        <Text>
+          <Text bold color={T.text}>
+            {'new-skill'}
+          </Text>
+          <Text color={T.textDim}>{'  ·  '}</Text>
+          <Text color={T.accentText}>{stepLabel}</Text>
           {step < STEPS.DONE && (
             <>
-              <span fg={T.textDim}>{'  ·  '}</span>
-              <span fg={T.textDim}>{progressBar}</span>
-              <span fg={T.textMuted}>{`  ${step + 1} / ${STEPS.DONE - 1}`}</span>
+              <Text color={T.textDim}>{'  ·  '}</Text>
+              <Text color={T.textDim}>{progressBar}</Text>
+              <Text color={T.textMuted}>{`  ${step + 1} / ${STEPS.DONE - 1}`}</Text>
             </>
           )}
-        </text>
-      </box>
+        </Text>
+      </Box>
 
       {/* Step content */}
-      <box flexGrow={1} flexDirection="column">
+      <Box flexDirection="column">
         {step === STEPS.WELCOME && (
           <Welcome
             initialName={config.name}
@@ -174,7 +173,7 @@ export function App() {
         )}
 
         {step === STEPS.DONE && <Done config={config} generatedPaths={generatedPaths} />}
-      </box>
-    </box>
+      </Box>
+    </Box>
   );
 }

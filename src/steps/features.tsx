@@ -1,9 +1,9 @@
-import { useKeyboard } from '@opentui/react';
+import { Box, Text, useInput } from 'ink';
+import TextInput from 'ink-text-input';
 import { useState } from 'react';
 import { FieldBox, KeyHints, StepHeader } from '../components.js';
 import { T } from '../theme.js';
 import type { SkillConfig } from '../types/skill.js';
-import { onInputSubmit } from '../utils/input.js';
 
 type Features = SkillConfig['features'];
 
@@ -43,8 +43,8 @@ export function Features({
 
   const doNext = () => onNext(features, agentDisplayName);
 
-  useKeyboard((key) => {
-    if (key.name === 'escape') {
+  useInput((input, key) => {
+    if (key.escape) {
       if (focusZone === 'agentName') {
         setFocusZone('list');
       } else {
@@ -53,7 +53,7 @@ export function Features({
       return;
     }
 
-    if (key.ctrl && key.name === 's') {
+    if (key.ctrl && input === 's') {
       if (features.agents && !agentDisplayName.trim()) {
         setFocusZone('agentName');
       } else {
@@ -63,22 +63,22 @@ export function Features({
     }
 
     if (focusZone === 'list') {
-      if (key.name === 'up' || key.name === 'k') {
+      if (key.upArrow || input === 'k') {
         setCursor((c) => Math.max(0, c - 1));
         return;
       }
-      if (key.name === 'down' || key.name === 'j') {
+      if (key.downArrow || input === 'j') {
         setCursor((c) => Math.min(TOTAL_ITEMS - 1, c + 1));
         return;
       }
-      if (key.name === 'space') {
+      if (input === ' ') {
         if (cursor < FEATURE_ITEMS.length) {
-          const featureKey = FEATURE_ITEMS[cursor].key;
+          const featureKey = FEATURE_ITEMS[cursor]!.key;
           setFeatures((f) => ({ ...f, [featureKey]: !f[featureKey] }));
         }
         return;
       }
-      if (key.name === 'return' || key.name === 'linefeed') {
+      if (key.return) {
         if (cursor === CONTINUE_IDX) {
           if (features.agents && !agentDisplayName.trim()) {
             setFocusZone('agentName');
@@ -86,12 +86,12 @@ export function Features({
             doNext();
           }
         } else {
-          const featureKey = FEATURE_ITEMS[cursor].key;
+          const featureKey = FEATURE_ITEMS[cursor]!.key;
           setFeatures((f) => ({ ...f, [featureKey]: !f[featureKey] }));
         }
         return;
       }
-      if (key.name === 'tab') {
+      if (key.tab) {
         if (features.agents) {
           setFocusZone('agentName');
         } else {
@@ -102,7 +102,7 @@ export function Features({
     }
 
     if (focusZone === 'agentName') {
-      if (key.name === 'tab') {
+      if (key.tab) {
         setFocusZone('list');
         return;
       }
@@ -115,7 +115,7 @@ export function Features({
   };
 
   return (
-    <box flexDirection="column" padding={2} gap={1}>
+    <Box flexDirection="column" padding={2} gap={1}>
       <StepHeader
         title="Step 3 — Optional Features"
         subtitle="Choose which files and directories to scaffold."
@@ -129,56 +129,56 @@ export function Features({
         flexShrink={0}
       >
         {FEATURE_ITEMS.map((item, i) => (
-          <text key={item.key}>
-            <span fg={cursor === i && focusZone === 'list' ? T.accentText : T.textDim}>
+          <Text key={item.key}>
+            <Text color={cursor === i && focusZone === 'list' ? T.accentText : T.textDim}>
               {cursor === i && focusZone === 'list' ? '> ' : '  '}
-            </span>
-            <span fg={features[item.key] ? T.success : T.textDim}>
+            </Text>
+            <Text color={features[item.key] ? T.success : T.textDim}>
               {features[item.key] ? '●' : '○'}
-            </span>
+            </Text>
             {'  '}
-            <span fg={cursor === i && focusZone === 'list' ? T.text : T.textMuted}>
+            <Text color={cursor === i && focusZone === 'list' ? T.text : T.textMuted}>
               {item.label.padEnd(14)}
-            </span>
-            <span fg={T.textDim}>{item.desc}</span>
-          </text>
+            </Text>
+            <Text color={T.textDim}>{item.desc}</Text>
+          </Text>
         ))}
 
-        <text style={{ fg: T.textDim }}>
+        <Text color={T.textDim}>
           {'  ─────────────────────────────────────────────────────'}
-        </text>
+        </Text>
 
-        <text>
-          <span fg={cursor === CONTINUE_IDX && focusZone === 'list' ? T.accentText : T.textDim}>
+        <Text>
+          <Text color={cursor === CONTINUE_IDX && focusZone === 'list' ? T.accentText : T.textDim}>
             {cursor === CONTINUE_IDX && focusZone === 'list' ? '> ' : '  '}
-          </span>
-          <span fg={cursor === CONTINUE_IDX && focusZone === 'list' ? T.success : T.textDim}>
+          </Text>
+          <Text color={cursor === CONTINUE_IDX && focusZone === 'list' ? T.success : T.textDim}>
             {'Continue →'}
-          </span>
-        </text>
+          </Text>
+        </Text>
       </FieldBox>
 
       {features.agents && (
         <FieldBox title="Agent Display Name" focused={focusZone === 'agentName'} height={3}>
-          <input
+          <TextInput
             placeholder="TypeScript Expert, API Designer, Code Reviewer..."
-            focused={focusZone === 'agentName'}
-            onInput={setAgentDisplayName}
-            onSubmit={onInputSubmit(handleAgentNameSubmit)}
+            focus={focusZone === 'agentName'}
             value={agentDisplayName}
+            onChange={setAgentDisplayName}
+            onSubmit={handleAgentNameSubmit}
           />
         </FieldBox>
       )}
 
       <KeyHints
         hints={[
-          { key: '↑↓ / j k', label: 'Move   ' },
-          { key: 'Space', label: 'Toggle   ' },
-          { key: 'Enter', label: 'Select   ' },
-          { key: 'Ctrl+S', label: 'Continue   ' },
+          { key: '↑↓ / j k', label: 'Move' },
+          { key: 'Space', label: 'Toggle' },
+          { key: 'Enter', label: 'Select' },
+          { key: 'Ctrl+S', label: 'Continue' },
           { key: 'Esc', label: 'Back' },
         ]}
       />
-    </box>
+    </Box>
   );
 }

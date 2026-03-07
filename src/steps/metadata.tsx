@@ -1,6 +1,6 @@
-import type { TextareaRenderable } from '@opentui/core';
-import { useKeyboard } from '@opentui/react';
-import { useRef, useState } from 'react';
+import { Box, useInput } from 'ink';
+import TextInput from 'ink-text-input';
+import { useState } from 'react';
 import { ErrorLine, FieldBox, KeyHints, StepHeader } from '../components.js';
 
 interface MetadataProps {
@@ -9,48 +9,33 @@ interface MetadataProps {
   onBack: () => void;
 }
 
-const FIELDS = ['description'] as const;
-type Field = (typeof FIELDS)[number];
-
 export function Metadata({ initialDescription = '', onNext, onBack }: MetadataProps) {
-  const textareaRef = useRef<TextareaRenderable>(null);
-  const [focused, setFocused] = useState<Field>('description');
+  const [description, setDescription] = useState(initialDescription);
   const [error, setError] = useState('');
 
-  useKeyboard((key) => {
-    if (key.name === 'escape') {
+  const submit = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setError('Description is required.');
+      return;
+    }
+    setError('');
+    onNext(trimmed);
+  };
+
+  useInput((input, key) => {
+    if (key.escape) {
       onBack();
       return;
     }
 
-    if (key.name === 'tab') {
-      const reverse = key.shift;
-      setFocused((f) =>
-        reverse
-          ? f === 'description'
-            ? 'description'
-            : 'description'
-          : f === 'description'
-            ? 'description'
-            : 'description',
-      );
-      return;
-    }
-
-    if (key.ctrl && key.name === 's') {
-      const description = textareaRef.current?.plainText?.trim() ?? '';
-      if (!description) {
-        setError('Description is required.');
-        setFocused('description');
-        return;
-      }
-      setError('');
-      onNext(description);
+    if (key.ctrl && input === 's') {
+      submit(description);
     }
   });
 
   return (
-    <box flexDirection="column" padding={2} gap={1}>
+    <Box flexDirection="column" padding={2} gap={1}>
       <StepHeader
         title="Step 2 — Skill Metadata"
         subtitle="Describe what triggers this skill and how the agent should use it."
@@ -58,15 +43,16 @@ export function Metadata({ initialDescription = '', onNext, onBack }: MetadataPr
 
       <FieldBox
         title="Description  (trigger condition)"
-        focused={focused === 'description'}
-        height={8}
+        focused
+        height={3}
         marginTop={1}
       >
-        <textarea
-          ref={textareaRef}
+        <TextInput
           placeholder="Extracts data from X files. Use when working with X or when the user mentions Y."
-          focused={focused === 'description'}
-          initialValue={initialDescription}
+          focus
+          value={description}
+          onChange={setDescription}
+          onSubmit={submit}
         />
       </FieldBox>
 
@@ -74,12 +60,11 @@ export function Metadata({ initialDescription = '', onNext, onBack }: MetadataPr
 
       <KeyHints
         hints={[
-          { key: 'Tab', label: 'Next field   ' },
-          { key: 'Shift+Tab', label: 'Prev field   ' },
-          { key: 'Ctrl+S', label: 'Continue   ' },
+          { key: 'Enter', label: 'Continue' },
+          { key: 'Ctrl+S', label: 'Continue' },
           { key: 'Esc', label: 'Back' },
         ]}
       />
-    </box>
+    </Box>
   );
 }

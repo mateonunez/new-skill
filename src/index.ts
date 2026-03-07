@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { createCliRenderer } from '@opentui/core';
-import { createRoot } from '@opentui/react';
+import { render } from 'ink';
 import { createElement } from 'react';
 import { App } from './app.js';
 import { generateSkill } from './generators/index.js';
@@ -9,8 +8,8 @@ import type { SkillConfig } from './types/skill.js';
 import { defaultConfig } from './types/skill.js';
 
 async function runInteractive(): Promise<void> {
-  const renderer = await createCliRenderer({ exitOnCtrlC: true });
-  createRoot(renderer).render(createElement(App));
+  const { waitUntilExit } = render(createElement(App));
+  await waitUntilExit();
 }
 
 async function runNonInteractive(args: {
