@@ -22,20 +22,25 @@ bunx new-skill --no-interactive --name my-skill --output ./skills
 new-skill --no-interactive \
   --name my-skill \
   --output ./skills \
-  --description "Use this skill when working with my-skill." \
+  --description "Processes my-skill files. Use when working with my-skill." \
   --rules no-var,prefer-const \
-  --agents \
+  --agents openai,claude-code \
+  --agents-md \
+  --eval-format claude \
   --assets
 ```
 
 | Flag | Description |
 |------|-------------|
-| `-n, --name` | Skill name (kebab-case) — required |
+| `-n, --name` | Skill name (kebab-case, max 64 chars) — required |
 | `-o, --output` | Output directory (default: `.`) |
-| `-d, --description` | Skill description |
+| `-d, --description` | Skill description (third-person) |
 | `--rules <r1,r2>` | Comma-separated rule names |
-| `--agents` | Generate `agents/openai.yml` |
-| `--assets` | Create `assets/` placeholder |
+| `--evals <e1,e2>` | Comma-separated eval IDs (non-interactive stub) |
+| `--eval-format <claude\|extended>` | Eval output format (default: `claude`) |
+| `--agents <openai,claude-code>` | Comma-separated agent targets |
+| `--agents-md` | Generate `AGENTS.md` universal instructions |
+| `--assets` | Create `assets/` with icon stubs |
 | `--no-interactive` | Skip the TUI wizard |
 
 ## Output
@@ -45,16 +50,27 @@ For a skill named `my-skill` with all features enabled:
 ```
 my-skill/
   SKILL.md                  # frontmatter (name, description) + section stubs
+  AGENTS.md                 # universal instructions (Vercel / Codex ecosystem)
   agents/
-    openai.yml              # display_name, short_description, icon paths
+    openai.yml              # OpenAI / Codex agent config
+    claude.yml              # Claude Code agent config
+    agents.yml              # generic platform-agnostic YAML
   evals/
-    evals.json              # { skill_name, evals: [{ id, prompt, expected_output }] }
+    evals.json              # eval entries in the selected format
   rules/
-    no-var.md               # ## Incorrect / ## Correct pattern pair
+    no-var.md               # ## Incorrect / ## Correct + ### Why stubs
     prefer-const.md
   assets/
-    .gitkeep                # placeholder — drop icon-small.png / icon-large.png here
+    icon-small.png          # 1×1 transparent PNG placeholder
+    icon-large.png
 ```
+
+### Eval formats
+
+| Format | Structure |
+|--------|-----------|
+| `claude` (default) | Array of `{ skills, query, files, expected_behavior }` — matches the [Claude skill spec](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) |
+| `extended` | `{ skill_name, evals: [{ id, prompt, expected_output, files, expectations }] }` — richer envelope for custom pipelines |
 
 The generated `SKILL.md` frontmatter follows the Claude Code skill spec:
 
