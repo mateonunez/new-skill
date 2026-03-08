@@ -9,9 +9,24 @@ const result = await Bun.build({
   define: {
     'process.env.DEV': 'false',
   },
-  // react-devtools-core is an optional dev dependency of ink, only loaded
-  // when DEV=true. Mark it external so Bun doesn't fail trying to resolve it.
-  external: ['react-devtools-core'],
+  // Stub react-devtools-core so it is bundled as a no-op rather than left
+  // as an external import. Marking it `external` causes Node to fail when
+  // the package is absent (e.g. after `npx new-skill`).
+  plugins: [
+    {
+      name: 'stub-react-devtools-core',
+      setup(build: any) {
+        build.onResolve({ filter: /^react-devtools-core$/ }, () => ({
+          path: 'react-devtools-core',
+          namespace: 'stub',
+        }));
+        build.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({
+          contents: 'export const connectToDevTools = () => {}; export default { connectToDevTools };',
+          loader: 'js',
+        }));
+      },
+    },
+  ],
 });
 
 if (!result.success) {
