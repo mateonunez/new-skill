@@ -1,6 +1,6 @@
 {
   "name": "new-skill",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Interactive CLI to scaffold new skills",
   "type": "module",
   "author": "mateonunez <me@mateonunez.co>",
