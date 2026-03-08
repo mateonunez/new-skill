@@ -42,7 +42,7 @@ export function Done({ config, generatedPaths }: DoneProps) {
       >
         <Text color={T.textDim}>{' Generated files'}</Text>
         <Box flexDirection="column" marginTop={1}>
-          {generatedPaths.map((p) => {
+          {generatedPaths.map((p, i) => {
             const rel = (() => {
               try {
                 return relative(cwd, p);
@@ -52,7 +52,7 @@ export function Done({ config, generatedPaths }: DoneProps) {
             })();
             return (
               <Text key={p}>
-                <Text color={T.success}>{'  + '}</Text>
+                <Text color={T.textDim}>{`  ${String(i + 1).padStart(2, ' ')}. `}</Text>
                 <Text color={T.text}>{rel}</Text>
               </Text>
             );
