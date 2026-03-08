@@ -1,6 +1,7 @@
 import { Box, Text } from 'ink';
 import { useCallback, useState } from 'react';
 import { generateSkill } from './generators/index.js';
+import { useTerminalSize } from './hooks/useTerminalSize.js';
 import { Done } from './steps/done.js';
 import { Evals } from './steps/evals.js';
 import { Features } from './steps/features.js';
@@ -56,6 +57,7 @@ function getPrevStep(step: number, config: SkillConfig): number {
 const STEP_LABELS = ['Welcome', 'Metadata', 'Features', 'Rules', 'Evals', 'Preview', 'Done'];
 
 export function App() {
+  const { rows } = useTerminalSize();
   const [step, setStep] = useState<number>(STEPS.WELCOME);
   const [config, setConfig] = useState<SkillConfig>(defaultConfig);
   const [generatedPaths, setGeneratedPaths] = useState<string[]>([]);
@@ -99,6 +101,24 @@ export function App() {
     return '━'.repeat(filled) + '─'.repeat(20 - filled);
   })();
 
+  const MIN_ROWS = 22;
+
+  if (rows < MIN_ROWS) {
+    return (
+      <Box flexDirection="column" paddingX={2} paddingY={1} gap={1}>
+        <Text bold color={T.warning}>
+          {'Terminal too small'}
+        </Text>
+        <Text color={T.textDim}>
+          {'Resize to at least '}
+          <Text color={T.text}>{String(MIN_ROWS)}</Text>
+          {' rows  ·  current: '}
+          <Text color={T.error}>{String(rows)}</Text>
+        </Text>
+      </Box>
+    );
+  }
+
   return (
     <Box flexDirection="column">
       {/* Top bar */}
@@ -126,6 +146,7 @@ export function App() {
             initialName={config.name}
             initialOutputDir={config.outputDir}
             onNext={(name, outputDir) => applyAndAdvance({ name, outputDir })}
+            stepNumber={step + 1}
           />
         )}
 
@@ -134,6 +155,7 @@ export function App() {
             initialDescription={config.description}
             onNext={(description) => applyAndAdvance({ description })}
             onBack={handleBack}
+            stepNumber={step + 1}
           />
         )}
 
@@ -141,8 +163,12 @@ export function App() {
           <Features
             initialFeatures={config.features}
             initialAgentDisplayName={config.agentDisplayName}
-            onNext={(features, agentDisplayName) => applyAndAdvance({ features, agentDisplayName })}
+            initialAgentTargets={config.agentTargets}
+            onNext={(features, agentDisplayName, agentTargets) =>
+              applyAndAdvance({ features, agentDisplayName, agentTargets })
+            }
             onBack={handleBack}
+            stepNumber={step + 1}
           />
         )}
 
@@ -151,14 +177,17 @@ export function App() {
             initialRules={config.rules}
             onNext={(rules) => applyAndAdvance({ rules })}
             onBack={handleBack}
+            stepNumber={step + 1}
           />
         )}
 
         {step === STEPS.EVALS && (
           <Evals
             initialEvals={config.evals}
-            onNext={(evals: EvalEntry[]) => applyAndAdvance({ evals })}
+            initialEvalFormat={config.evalFormat}
+            onNext={(evals: EvalEntry[], evalFormat) => applyAndAdvance({ evals, evalFormat })}
             onBack={handleBack}
+            stepNumber={step + 1}
           />
         )}
 
