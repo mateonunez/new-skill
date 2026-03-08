@@ -30,3 +30,4 @@ yarn-error.log*
 .claude/skills
 .claude/settings.local.json
 .github/prompts
+.vscode/settings.json
