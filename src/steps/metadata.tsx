@@ -1,57 +1,56 @@
-import { Box, useInput } from 'ink';
+import { Box } from 'ink';
 import TextInput from 'ink-text-input';
-import { useState } from 'react';
 import { ErrorLine, FieldBox, KeyHints, StepHeader } from '../components.js';
+import { useFieldState } from '../hooks/useFieldState.js';
+import { useStepKeyboard } from '../hooks/useStepKeyboard.js';
+import { validateDescription } from '../utils/validation.js';
 
 interface MetadataProps {
   initialDescription?: string;
   onNext: (description: string) => void;
   onBack: () => void;
+  stepNumber?: number;
 }
 
-export function Metadata({ initialDescription = '', onNext, onBack }: MetadataProps) {
-  const [description, setDescription] = useState(initialDescription);
-  const [error, setError] = useState('');
+export function Metadata({ initialDescription = '', onNext, onBack, stepNumber }: MetadataProps) {
+  const {
+    value: description,
+    onChange,
+    error,
+    validate,
+  } = useFieldState(initialDescription, validateDescription);
 
-  const submit = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      setError('Description is required.');
-      return;
+  const submit = () => {
+    if (validate()) {
+      onNext(description.trim());
     }
-    setError('');
-    onNext(trimmed);
   };
 
-  useInput((input, key) => {
-    if (key.escape) {
-      onBack();
-      return;
-    }
+  useStepKeyboard({ onNext: submit, onBack });
 
-    if (key.ctrl && input === 's') {
-      submit(description);
-    }
-  });
+  const title = stepNumber ? `Step ${stepNumber} — Skill Description` : 'Skill Description';
 
   return (
     <Box flexDirection="column" padding={2} gap={1}>
       <StepHeader
-        title="Step 2 — Skill Metadata"
-        subtitle="Describe what triggers this skill and how the agent should use it."
+        title={title}
+        subtitle="Describe what triggers this skill and what the agent should do. Write in third person."
       />
 
-      <FieldBox title="Description  (trigger condition)" focused height={3} marginTop={1}>
+      <FieldBox title="Description" focused height={3} marginTop={1}>
         <TextInput
-          placeholder="Extracts data from X files. Use when working with X or when the user mentions Y."
+          placeholder="Processes X files and generates Y. Use when working with X or when the user mentions Y."
           focus
           value={description}
-          onChange={setDescription}
+          onChange={onChange}
           onSubmit={submit}
         />
       </FieldBox>
 
-      <ErrorLine error={error} />
+      <ErrorLine
+        error={error}
+        hint="Write in third person. Third-person descriptions improve skill discovery accuracy."
+      />
 
       <KeyHints
         hints={[

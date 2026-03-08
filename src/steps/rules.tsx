@@ -1,7 +1,9 @@
-import { Box, Text, useInput } from 'ink';
+import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
 import { useState } from 'react';
 import { ErrorLine, FieldBox, KeyHints, StepHeader } from '../components.js';
+import { useFieldState } from '../hooks/useFieldState.js';
+import { useStepKeyboard } from '../hooks/useStepKeyboard.js';
 import { T } from '../theme.js';
 import { KEBAB_RE } from '../utils/validation.js';
 
@@ -11,23 +13,14 @@ interface RulesProps {
   initialRules?: string[];
   onNext: (rules: string[]) => void;
   onBack: () => void;
+  stepNumber?: number;
 }
 
-export function Rules({ initialRules = [], onNext, onBack }: RulesProps) {
+export function Rules({ initialRules = [], onNext, onBack, stepNumber }: RulesProps) {
   const [rules, setRules] = useState<string[]>(initialRules);
-  const [inputValue, setInputValue] = useState('');
-  const [error, setError] = useState('');
+  const { value: inputValue, onChange: setInputValue, error, setError, reset } = useFieldState('');
 
-  useInput((input, key) => {
-    if (key.escape) {
-      onBack();
-      return;
-    }
-
-    if (key.ctrl && input === 's') {
-      onNext(rules);
-    }
-  });
+  useStepKeyboard({ onNext: () => onNext(rules), onBack });
 
   const handleSubmit = (value: string) => {
     const trimmed = value.trim().toLowerCase().replace(/\s+/g, '-');
@@ -47,9 +40,8 @@ export function Rules({ initialRules = [], onNext, onBack }: RulesProps) {
       return;
     }
 
-    setError('');
     setRules((prev) => [...prev, trimmed]);
-    setInputValue('');
+    reset();
   };
 
   const hint =
@@ -57,10 +49,12 @@ export function Rules({ initialRules = [], onNext, onBack }: RulesProps) {
       ? ' Press Enter with empty input to skip and continue.'
       : ` ${rules.length} rule(s) added. Empty Enter to continue.`;
 
+  const title = stepNumber ? `Step ${stepNumber} — Rules` : 'Rules';
+
   return (
     <Box flexDirection="column" padding={2} gap={1}>
       <StepHeader
-        title="Step 4 — Rules"
+        title={title}
         subtitle="Add rule names (kebab-case). Each rule gets an Incorrect / Correct stub."
       />
 
@@ -100,8 +94,7 @@ export function Rules({ initialRules = [], onNext, onBack }: RulesProps) {
 
       <KeyHints
         hints={[
-          { key: 'Enter', label: 'Add rule' },
-          { key: 'Enter (empty)', label: 'Continue' },
+          { key: 'Enter', label: 'Add rule / continue if empty' },
           { key: 'Ctrl+S', label: 'Continue' },
           { key: 'Esc', label: 'Back' },
         ]}
