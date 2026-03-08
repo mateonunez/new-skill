@@ -1,6 +1,7 @@
-import { Box, Text, useInput } from 'ink';
+import { Box, Text } from 'ink';
 import { KeyHints, StepHeader } from '../components.js';
 import { buildFileTree } from '../generators/index.js';
+import { useStepKeyboard } from '../hooks/useStepKeyboard.js';
 import { T } from '../theme.js';
 import type { SkillConfig } from '../types/skill.js';
 
@@ -10,32 +11,27 @@ interface PreviewProps {
   generateError: string;
   onConfirm: () => void;
   onBack: () => void;
+  stepNumber?: number;
 }
 
-export function Preview({ config, generating, generateError, onConfirm, onBack }: PreviewProps) {
+export function Preview({
+  config,
+  generating,
+  generateError,
+  onConfirm,
+  onBack,
+  stepNumber,
+}: PreviewProps) {
   const treeLines = buildFileTree(config);
 
-  useInput((input, key) => {
-    if (generating) return;
-
-    if (key.return) {
-      onConfirm();
-      return;
-    }
-    if (key.ctrl && input === 's') {
-      onConfirm();
-      return;
-    }
-    if (key.escape) {
-      onBack();
-    }
-  });
+  useStepKeyboard({ onNext: onConfirm, onBack, disabled: generating, enterTriggersNext: true });
 
   const outputPath = `${config.outputDir}/${config.name}`;
+  const title = stepNumber ? `Step ${stepNumber} — Preview` : 'Preview';
 
   return (
     <Box flexDirection="column" padding={2} gap={1}>
-      <StepHeader title="Step 6 — Preview" subtitle="Review the files that will be written to:" />
+      <StepHeader title={title} subtitle="Review the files that will be written to:" />
 
       <Text color={T.textMuted}>
         {'  → '}
