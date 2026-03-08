@@ -18,19 +18,35 @@ async function runNonInteractive(args: {
   description?: string;
   rules?: string;
   evals?: string;
-  agents?: boolean;
+  evalFormat?: string;
+  agents?: string;
+  agentsMd?: boolean;
   assets?: boolean;
 }): Promise<void> {
+  const agentTargets = args.agents
+    ? (args.agents
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean) as import('./types/skill.js').AgentTarget[])
+    : (['openai'] as import('./types/skill.js').AgentTarget[]);
+
+  const evalFormat = (
+    args.evalFormat === 'extended' ? 'extended' : 'claude'
+  ) as import('./types/skill.js').EvalFormat;
+
   const config: SkillConfig = {
     ...defaultConfig,
     name: args.name,
     outputDir: args.output ?? '.',
     description: args.description ?? `Use this skill when you need to work with ${args.name}.`,
     agentDisplayName: args.name,
+    evalFormat,
+    agentTargets,
     features: {
       rules: Boolean(args.rules),
       evals: Boolean(args.evals),
       agents: Boolean(args.agents),
+      agentsMd: Boolean(args.agentsMd),
       assets: Boolean(args.assets),
     },
     rules: args.rules
@@ -61,7 +77,10 @@ async function main(): Promise<void> {
       output: { type: 'string', short: 'o' },
       description: { type: 'string', short: 'd' },
       rules: { type: 'string' },
-      agents: { type: 'boolean' },
+      evals: { type: 'string' },
+      'eval-format': { type: 'string' },
+      agents: { type: 'string' },
+      'agents-md': { type: 'boolean' },
       assets: { type: 'boolean' },
       'no-interactive': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' },
@@ -80,19 +99,23 @@ USAGE
     --name <name> [options]         Non-interactive mode
 
 OPTIONS
-  -n, --name <name>         Skill name (kebab-case)
-  -o, --output <dir>        Output directory (default: .)
-  -d, --description <text>  Skill description
-  --rules <r1,r2>           Comma-separated rule names
-  --agents                  Generate agents/openai.yml
-  --assets                  Create assets/ directory
-  --no-interactive          Skip the TUI wizard
-  -h, --help                Show this help
+  -n, --name <name>             Skill name (kebab-case)
+  -o, --output <dir>            Output directory (default: .)
+  -d, --description <text>      Skill description
+  --rules <r1,r2>               Comma-separated rule names
+  --evals <e1,e2>               Comma-separated eval IDs (non-interactive stub)
+  --eval-format <claude|extended>  Eval output format (default: claude)
+  --agents <openai,claude-code> Comma-separated agent targets
+  --agents-md                   Generate AGENTS.md
+  --assets                      Create assets/ directory
+  --no-interactive              Skip the TUI wizard
+  -h, --help                    Show this help
 
 EXAMPLES
   new-skill
   new-skill --no-interactive --name shadcn --output ./skills
-  new-skill --no-interactive --name my-skill --rules no-var,prefer-const --agents
+  new-skill --no-interactive --name my-skill --rules no-var,prefer-const --agents openai,claude-code
+  new-skill --no-interactive --name my-skill --eval-format extended --agents-md
 `);
     process.exit(0);
   }
@@ -110,7 +133,10 @@ EXAMPLES
       output: values.output as string | undefined,
       description: values.description as string | undefined,
       rules: values.rules as string | undefined,
-      agents: values.agents as boolean | undefined,
+      evals: values.evals as string | undefined,
+      evalFormat: values['eval-format'] as string | undefined,
+      agents: values.agents as string | undefined,
+      agentsMd: values['agents-md'] as boolean | undefined,
       assets: values.assets as boolean | undefined,
     });
     return;
