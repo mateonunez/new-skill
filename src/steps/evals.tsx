@@ -2,27 +2,40 @@ import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import { useState } from 'react';
 import { ErrorLine, FieldBox, KeyHints, StepHeader } from '../components.js';
+import { useStepKeyboard } from '../hooks/useStepKeyboard.js';
 import { T } from '../theme.js';
-import type { EvalEntry } from '../types/skill.js';
+import type { EvalEntry, EvalFormat } from '../types/skill.js';
 
 type EvalPhase = 'prompt' | 'expected';
 
+const MAX_VISIBLE = 5;
+
 interface EvalsProps {
   initialEvals?: EvalEntry[];
-  onNext: (evals: EvalEntry[]) => void;
+  initialEvalFormat?: EvalFormat;
+  onNext: (evals: EvalEntry[], evalFormat: EvalFormat) => void;
   onBack: () => void;
+  stepNumber?: number;
 }
 
-export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
+export function Evals({
+  initialEvals = [],
+  initialEvalFormat = 'claude',
+  onNext,
+  onBack,
+  stepNumber,
+}: EvalsProps) {
   const [evals, setEvals] = useState<EvalEntry[]>(initialEvals);
+  const [evalFormat, setEvalFormat] = useState<EvalFormat>(initialEvalFormat);
   const [phase, setPhase] = useState<EvalPhase>('prompt');
   const [currentPrompt, setCurrentPrompt] = useState('');
   const [promptInput, setPromptInput] = useState('');
   const [expectedInput, setExpectedInput] = useState('');
   const [error, setError] = useState('');
 
-  useInput((input, key) => {
-    if (key.escape) {
+  useStepKeyboard({
+    onNext: () => onNext(evals, evalFormat),
+    onBack: () => {
       if (phase === 'expected') {
         setPhase('prompt');
         setCurrentPrompt('');
@@ -32,18 +45,20 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
       } else {
         onBack();
       }
-      return;
-    }
+    },
+  });
 
-    if (key.ctrl && input === 's') {
-      onNext(evals);
+  useInput((input, _key) => {
+    // Format toggle — only on the prompt phase
+    if (phase === 'prompt' && (input === 'f' || input === 'F')) {
+      setEvalFormat((prev) => (prev === 'claude' ? 'extended' : 'claude'));
     }
   });
 
   const handlePromptSubmit = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed) {
-      onNext(evals);
+      onNext(evals, evalFormat);
       return;
     }
     setError('');
@@ -73,32 +88,48 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
     setPhase('prompt');
   };
 
+  const expectedLabel = evalFormat === 'claude' ? 'Expected Behavior' : 'Expected Output';
+  const title = stepNumber ? `Step ${stepNumber} — Eval Entries` : 'Eval Entries';
+
   const hint =
     phase === 'prompt'
       ? evals.length === 0
         ? ' Press Enter with empty prompt to skip.'
         : ` ${evals.length} eval(s) added. Empty prompt to continue.`
-      : ' Now enter the expected output for this eval.';
+      : ` Now enter the ${evalFormat === 'claude' ? 'expected behavior' : 'expected output'}.`;
 
   return (
     <Box flexDirection="column" padding={2} gap={1}>
       <StepHeader
-        title="Step 5 — Eval Entries"
+        title={title}
         subtitle="Add prompt + expected output pairs. Leave prompt empty to finish."
       />
 
+      <Box marginBottom={1}>
+        <Text color={T.textDim}>{' Format: '}</Text>
+        <Text color={evalFormat === 'claude' ? T.success : T.textDim}>{'claude'}</Text>
+        <Text color={T.textDim}>{' / '}</Text>
+        <Text color={evalFormat === 'extended' ? T.success : T.textDim}>{'extended'}</Text>
+        <Text color={T.textDim}>{'  (press F to toggle)'}</Text>
+      </Box>
+
       {evals.length > 0 && (
-        <FieldBox title={`Added evals (${evals.length})`} marginTop={1} padding={1}>
+        <FieldBox title={`Added evals (${evals.length})`} marginTop={1} padding={1} flexShrink={0}>
           <Box flexDirection="column">
-            {evals.map((e) => (
-              <Text key={e.id}>
-                <Text color={T.success}>{'  + '}</Text>
-                <Text color={T.accentText}>{e.id}</Text>
-                <Text color={T.textDim}>{'  '}</Text>
-                <Text color={T.text}>{e.prompt.substring(0, 50)}</Text>
-                {e.prompt.length > 50 && <Text color={T.textDim}>{'...'}</Text>}
-              </Text>
-            ))}
+            {evals.slice(-MAX_VISIBLE).map((e, i) => {
+              const idx = Math.max(0, evals.length - MAX_VISIBLE) + i;
+              const prompt = e.prompt.length > 48 ? `${e.prompt.substring(0, 48)}…` : e.prompt;
+              return (
+                <Text key={e.id}>
+                  <Text color={T.textDim}>{`  ${String(idx + 1).padStart(2, ' ')}. `}</Text>
+                  <Text color={T.text}>{prompt}</Text>
+                  <Text color={T.textDim}>{`   → evals/${e.id}`}</Text>
+                </Text>
+              );
+            })}
+            {evals.length > MAX_VISIBLE && (
+              <Text color={T.textDim}>{`     … and ${evals.length - MAX_VISIBLE} more`}</Text>
+            )}
           </Box>
         </FieldBox>
       )}
@@ -125,7 +156,7 @@ export function Evals({ initialEvals = [], onNext, onBack }: EvalsProps) {
           <FieldBox title="Prompt (locked)" height={3} marginTop={1}>
             <Text color={T.textMuted}>{currentPrompt}</Text>
           </FieldBox>
-          <FieldBox title="Expected Output" focused height={3}>
+          <FieldBox title={expectedLabel} focused height={3}>
             <TextInput
               placeholder="Describe the expected response from the agent"
               focus
