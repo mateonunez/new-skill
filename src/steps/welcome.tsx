@@ -3,24 +3,24 @@ import TextInput from 'ink-text-input';
 import { useCallback, useState } from 'react';
 import { ErrorLine, FieldBox, KeyHints } from '../components.js';
 import { T } from '../theme.js';
-import { GERUND_RE, KEBAB_RE } from '../utils/validation.js';
+import { GERUND_RE, KEBAB_RE, validateSkillName } from '../utils/validation.js';
 
 interface WelcomeProps {
   initialName?: string;
   initialOutputDir?: string;
   onNext: (name: string, outputDir: string) => void;
+  stepNumber?: number;
 }
 
 const FIELDS = ['name', 'dir'] as const;
 type Field = (typeof FIELDS)[number];
 
-function validateName(name: string): string {
-  if (!name.trim()) return 'Skill name is required.';
-  if (!KEBAB_RE.test(name.trim())) return 'Name must be kebab-case (e.g. my-skill).';
-  return '';
-}
-
-export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: WelcomeProps) {
+export function Welcome({
+  initialName = '',
+  initialOutputDir = '.',
+  onNext,
+  stepNumber,
+}: WelcomeProps) {
   const [name, setName] = useState(initialName);
   const [outputDir, setOutputDir] = useState(initialOutputDir);
   const [focused, setFocused] = useState<Field>('name');
@@ -34,26 +34,29 @@ export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: We
     });
   }, []);
 
-  useInput((input, key) => {
-    if (key.ctrl && input === 's') {
-      const err = validateName(name);
-      if (err) {
-        setError(err);
-        setFocused('name');
-        return;
-      }
-      setError('');
-      onNext(name.trim(), outputDir.trim() || '.');
+  const trySubmit = useCallback(() => {
+    const err = validateSkillName(name);
+    if (err) {
+      setError(err);
+      setFocused('name');
       return;
     }
+    setError('');
+    onNext(name.trim(), outputDir.trim() || '.');
+  }, [name, outputDir, onNext]);
 
+  useInput((input, key) => {
+    if (key.ctrl && input === 's') {
+      trySubmit();
+      return;
+    }
     if (key.tab) {
       cycleFocus(key.shift);
     }
   });
 
   const handleNameSubmit = (value: string) => {
-    const err = validateName(value);
+    const err = validateSkillName(value);
     if (err) {
       setError(err);
       return;
@@ -62,18 +65,12 @@ export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: We
     setFocused('dir');
   };
 
-  const handleDirSubmit = (value: string) => {
-    const err = validateName(name);
-    if (err) {
-      setError(err);
-      setFocused('name');
-      return;
-    }
-    setError('');
-    onNext(name.trim(), value.trim() || '.');
+  const handleDirSubmit = () => {
+    trySubmit();
   };
 
   const showGerundHint = name.length > 2 && KEBAB_RE.test(name) && !GERUND_RE.test(name);
+  const title = stepNumber ? `Step ${stepNumber} — Skill Identity` : 'Skill Identity';
 
   return (
     <Box flexDirection="column" padding={2} gap={1}>
@@ -85,11 +82,14 @@ export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: We
         {'Scaffold a new agent skill — covers all files and directories.'}
       </Text>
 
-      <FieldBox title="Skill Name" focused={focused === 'name'} height={3} marginTop={1}>
+      <FieldBox title={title} focused={focused === 'name'} height={3} marginTop={1}>
         <TextInput
-          placeholder="e.g. processing-pdfs  (kebab-case)"
+          placeholder="e.g. processing-pdfs  (kebab-case, max 64 chars)"
           focus={focused === 'name'}
-          onChange={setName}
+          onChange={(v) => {
+            setName(v);
+            setError('');
+          }}
           onSubmit={handleNameSubmit}
           value={name}
         />
@@ -117,9 +117,8 @@ export function Welcome({ initialName = '', initialOutputDir = '.', onNext }: We
         hints={[
           { key: 'Tab', label: 'Next field' },
           { key: 'Shift+Tab', label: 'Prev field' },
-          { key: 'Enter', label: 'Confirm' },
+          { key: 'Enter', label: 'Confirm field' },
           { key: 'Ctrl+S', label: 'Continue' },
-          { key: 'Ctrl+C', label: 'Exit' },
         ]}
       />
     </Box>
